@@ -34,7 +34,7 @@ export function SignUpForm({
     setError(null);
 
     if (password !== repeatPassword) {
-      setError("Passwords do not match");
+      setError("两次输入的密码不一致");
       setIsLoading(false);
       return;
     }
@@ -50,7 +50,7 @@ export function SignUpForm({
       if (error) throw error;
       router.push("/auth/sign-up-success");
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+      setError(error instanceof Error ? error.message : "注册时出现错误");
     } finally {
       setIsLoading(false);
     }
@@ -58,58 +58,72 @@ export function SignUpForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
+      <Card className="border-white/10 bg-white/5 shadow-2xl shadow-purple-900/20 backdrop-blur-xl">
         <CardHeader>
-          <CardTitle className="text-2xl">Sign up</CardTitle>
-          <CardDescription>Create a new account</CardDescription>
+          <CardTitle className="text-2xl text-white">注册</CardTitle>
+          <CardDescription className="text-slate-400">
+            创建一个新账户，开始使用待办清单
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignUp}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-slate-300">
+                  邮箱
+                </Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="you@example.com"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="border-white/10 bg-white/5 text-white placeholder-slate-500 focus:border-purple-500/50 focus:ring-purple-500/20"
                 />
               </div>
               <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                </div>
+                <Label htmlFor="password" className="text-slate-300">
+                  密码
+                </Label>
                 <Input
                   id="password"
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  className="border-white/10 bg-white/5 text-white placeholder-slate-500 focus:border-purple-500/50 focus:ring-purple-500/20"
                 />
               </div>
               <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="repeat-password">Repeat Password</Label>
-                </div>
+                <Label htmlFor="repeat-password" className="text-slate-300">
+                  确认密码
+                </Label>
                 <Input
                   id="repeat-password"
                   type="password"
                   required
                   value={repeatPassword}
                   onChange={(e) => setRepeatPassword(e.target.value)}
+                  className="border-white/10 bg-white/5 text-white placeholder-slate-500 focus:border-purple-500/50 focus:ring-purple-500/20"
                 />
               </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Creating an account..." : "Sign up"}
+              {error && <p className="text-sm text-rose-400">{error}</p>}
+              <Button
+                type="submit"
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-600/25 hover:shadow-xl hover:shadow-purple-600/30 hover:brightness-110"
+                disabled={isLoading}
+              >
+                {isLoading ? "注册中..." : "注册"}
               </Button>
             </div>
-            <div className="mt-4 text-center text-sm">
-              Already have an account?{" "}
-              <Link href="/auth/login" className="underline underline-offset-4">
-                Login
+            <div className="mt-4 text-center text-sm text-slate-400">
+              已有账户？{" "}
+              <Link
+                href="/auth/login"
+                className="text-purple-400 underline underline-offset-4 hover:text-purple-300"
+              >
+                登录
               </Link>
             </div>
           </form>

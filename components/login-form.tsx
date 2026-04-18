@@ -38,10 +38,9 @@ export function LoginForm({
         password,
       });
       if (error) throw error;
-      // Update this route to redirect to an authenticated route. The user already has an active session.
       router.push("/protected");
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+      setError(error instanceof Error ? error.message : "登录时出现错误");
     } finally {
       setIsLoading(false);
     }
@@ -49,35 +48,40 @@ export function LoginForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
+      <Card className="border-white/10 bg-white/5 shadow-2xl shadow-purple-900/20 backdrop-blur-xl">
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>
-            Enter your email below to login to your account
+          <CardTitle className="text-2xl text-white">登录</CardTitle>
+          <CardDescription className="text-slate-400">
+            输入您的邮箱和密码登录账户
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-slate-300">
+                  邮箱
+                </Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="you@example.com"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="border-white/10 bg-white/5 text-white placeholder-slate-500 focus:border-purple-500/50 focus:ring-purple-500/20"
                 />
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password" className="text-slate-300">
+                    密码
+                  </Label>
                   <Link
                     href="/auth/forgot-password"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                    className="ml-auto inline-block text-sm text-slate-400 underline-offset-4 hover:text-purple-400 hover:underline"
                   >
-                    Forgot your password?
+                    忘记密码？
                   </Link>
                 </div>
                 <Input
@@ -86,20 +90,25 @@ export function LoginForm({
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  className="border-white/10 bg-white/5 text-white placeholder-slate-500 focus:border-purple-500/50 focus:ring-purple-500/20"
                 />
               </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Logging in..." : "Login"}
+              {error && <p className="text-sm text-rose-400">{error}</p>}
+              <Button
+                type="submit"
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-600/25 hover:shadow-xl hover:shadow-purple-600/30 hover:brightness-110"
+                disabled={isLoading}
+              >
+                {isLoading ? "登录中..." : "登录"}
               </Button>
             </div>
-            <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{" "}
+            <div className="mt-4 text-center text-sm text-slate-400">
+              还没有账户？{" "}
               <Link
                 href="/auth/sign-up"
-                className="underline underline-offset-4"
+                className="text-purple-400 underline underline-offset-4 hover:text-purple-300"
               >
-                Sign up
+                注册
               </Link>
             </div>
           </form>
