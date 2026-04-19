@@ -16,8 +16,11 @@ import {
   X,
   LogIn,
   UserPlus,
+  LogOut,
 } from "lucide-react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 type Priority = "low" | "medium" | "high";
 type FilterType = "all" | "active" | "completed";
@@ -63,7 +66,17 @@ export default function Home() {
   const [priority, setPriority] = useState<Priority>("medium");
   const [filter, setFilter] = useState<FilterType>("all");
   const [removing, setRemoving] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem("cool-todos");
@@ -155,20 +168,36 @@ export default function Home() {
 
           {/* Auth buttons */}
           <div className="flex items-center gap-3">
-            <Link
-              href="/auth/login"
-              className="group flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-slate-300 backdrop-blur-sm transition-all hover:border-purple-500/30 hover:bg-white/10 hover:text-white"
-            >
-              <LogIn className="h-4 w-4 text-purple-400 transition-transform group-hover:-translate-x-0.5" />
-              登录
-            </Link>
-            <Link
-              href="/auth/sign-up"
-              className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-purple-600/25 transition-all hover:shadow-xl hover:shadow-purple-600/30 hover:brightness-110"
-            >
-              <UserPlus className="h-4 w-4 transition-transform group-hover:scale-110" />
-              注册
-            </Link>
+            {user ? (
+              <button
+                onClick={async () => {
+                  const supabase = createClient();
+                  await supabase.auth.signOut();
+                  setUser(null);
+                }}
+                className="group flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-slate-300 backdrop-blur-sm transition-all hover:border-rose-500/30 hover:bg-rose-500/10 hover:text-rose-400"
+              >
+                <LogOut className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5" />
+                退出登录
+              </button>
+            ) : (
+              <>
+                <Link
+                  href="/auth/login"
+                  className="group flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-slate-300 backdrop-blur-sm transition-all hover:border-purple-500/30 hover:bg-white/10 hover:text-white"
+                >
+                  <LogIn className="h-4 w-4 text-purple-400 transition-transform group-hover:-translate-x-0.5" />
+                  登录
+                </Link>
+                <Link
+                  href="/auth/sign-up"
+                  className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-purple-600/25 transition-all hover:shadow-xl hover:shadow-purple-600/30 hover:brightness-110"
+                >
+                  <UserPlus className="h-4 w-4 transition-transform group-hover:scale-110" />
+                  注册
+                </Link>
+              </>
+            )}
           </div>
         </div>
 
@@ -191,50 +220,62 @@ export default function Home() {
         )}
 
         {/* Input card */}
-        <div className="mb-6 w-full rounded-2xl border border-white/10 bg-white/5 p-4 shadow-2xl shadow-purple-900/20 backdrop-blur-xl">
-          <div className="flex gap-2">
-            <input
-              ref={inputRef}
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addTodo()}
-              placeholder="输入新的待办事项..."
-              className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition-all focus:border-purple-500/50 focus:bg-white/10 focus:ring-2 focus:ring-purple-500/20"
-            />
-            <button
-              onClick={addTodo}
-              disabled={!input.trim()}
-              className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 px-5 py-3 text-sm font-medium text-white shadow-lg shadow-purple-600/25 transition-all hover:shadow-xl hover:shadow-purple-600/30 hover:brightness-110 active:scale-95 disabled:opacity-40 disabled:shadow-none disabled:hover:brightness-100"
-            >
-              <Plus className="h-4 w-4 transition-transform group-hover:rotate-90" />
-              <span className="hidden sm:inline">添加</span>
-            </button>
-          </div>
+        {user ? (
+          <div className="mb-6 w-full rounded-2xl border border-white/10 bg-white/5 p-4 shadow-2xl shadow-purple-900/20 backdrop-blur-xl">
+            <div className="flex gap-2">
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addTodo()}
+                placeholder="输入新的待办事项..."
+                className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition-all focus:border-purple-500/50 focus:bg-white/10 focus:ring-2 focus:ring-purple-500/20"
+              />
+              <button
+                onClick={addTodo}
+                disabled={!input.trim()}
+                className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 px-5 py-3 text-sm font-medium text-white shadow-lg shadow-purple-600/25 transition-all hover:shadow-xl hover:shadow-purple-600/30 hover:brightness-110 active:scale-95 disabled:opacity-40 disabled:shadow-none disabled:hover:brightness-100"
+              >
+                <Plus className="h-4 w-4 transition-transform group-hover:rotate-90" />
+                <span className="hidden sm:inline">添加</span>
+              </button>
+            </div>
 
-          {/* Priority selector */}
-          <div className="mt-3 flex items-center gap-2">
-            <span className="text-xs text-slate-500">优先级：</span>
-            {(Object.keys(priorityConfig) as Priority[]).map((p) => {
-              const config = priorityConfig[p];
-              const Icon = config.icon;
-              return (
-                <button
-                  key={p}
-                  onClick={() => setPriority(p)}
-                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium ring-1 transition-all ${
-                    priority === p
-                      ? `${config.bg} ${config.color} ${config.ring} scale-105`
-                      : "text-slate-500 ring-transparent hover:text-slate-300 hover:ring-white/10"
-                  }`}
-                >
-                  <Icon className="h-3 w-3" />
-                  {config.label}
-                </button>
-              );
-            })}
+            {/* Priority selector */}
+            <div className="mt-3 flex items-center gap-2">
+              <span className="text-xs text-slate-500">优先级：</span>
+              {(Object.keys(priorityConfig) as Priority[]).map((p) => {
+                const config = priorityConfig[p];
+                const Icon = config.icon;
+                return (
+                  <button
+                    key={p}
+                    onClick={() => setPriority(p)}
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium ring-1 transition-all ${
+                      priority === p
+                        ? `${config.bg} ${config.color} ${config.ring} scale-105`
+                        : "text-slate-500 ring-transparent hover:text-slate-300 hover:ring-white/10"
+                    }`}
+                  >
+                    <Icon className="h-3 w-3" />
+                    {config.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="mb-6 w-full rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center backdrop-blur-xl">
+            <p className="text-sm text-slate-400">
+              请先{" "}
+              <Link href="/auth/login" className="text-purple-400 underline underline-offset-4 hover:text-purple-300">
+                登录
+              </Link>{" "}
+              后添加待办事项
+            </p>
+          </div>
+        )}
 
         {/* Filter tabs */}
         <div className="mb-5 flex w-full items-center justify-between">
