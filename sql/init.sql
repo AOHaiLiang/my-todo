@@ -41,7 +41,11 @@ create policy "Users can delete their own todos"
   on public.todos for delete
   using (auth.uid() = user_id);
 
--- 8. Storage RLS 策略（bucket: my-todo，需先在 Dashboard 中创建）
+-- 8. 启用 Realtime（允许客户端订阅 todos 表的变更）
+alter table public.todos replica identity full;
+alter publication supabase_realtime add table public.todos;
+
+-- 9. Storage RLS 策略（bucket: my-todo，需先在 Dashboard 中创建）
 -- 用户只能上传到自己 uid 目录下
 create policy "Users can upload to own folder"
   on storage.objects for insert

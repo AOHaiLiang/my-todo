@@ -94,18 +94,66 @@ export default function Home() {
   };
 
   useEffect(() => {
+    let realtimeChannel: ReturnType<typeof supabase.channel> | null = null;
+
+    const setupRealtime = () => {
+      realtimeChannel?.unsubscribe();
+      realtimeChannel = supabase
+        .channel(`todos-${Date.now()}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "todos" },
+          (payload) => {
+            if (payload.eventType === "INSERT") {
+              const newTodo = payload.new as Todo;
+              setTodos((prev) => {
+                if (prev.some((t) => t.id === newTodo.id)) return prev;
+                return [newTodo, ...prev];
+              });
+            } else if (payload.eventType === "UPDATE") {
+              const updated = payload.new as Todo;
+              setTodos((prev) =>
+                prev.map((t) => (t.id === updated.id ? updated : t))
+              );
+            } else if (payload.eventType === "DELETE") {
+              const deletedId = (payload.old as { id: string }).id;
+              setTodos((prev) => prev.filter((t) => t.id !== deletedId));
+            }
+          }
+        )
+        .subscribe((status, err) => {
+          if (err) setError(`实时同步连接失败: ${err.message}`);
+        });
+    };
+
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
-      if (data.user) fetchTodos();
-      else setLoading(false);
+      if (data.user) {
+        fetchTodos();
+        setupRealtime();
+      } else {
+        setLoading(false);
+      }
     });
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
-      if (currentUser) fetchTodos();
-      else { setTodos([]); setLoading(false); }
+      if (currentUser) {
+        fetchTodos();
+        setupRealtime();
+      } else {
+        realtimeChannel?.unsubscribe();
+        realtimeChannel = null;
+        setTodos([]);
+        setLoading(false);
+      }
     });
-    return () => subscription.unsubscribe();
+
+    return () => {
+      subscription.unsubscribe();
+      realtimeChannel?.unsubscribe();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
